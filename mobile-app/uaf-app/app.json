@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "UAF - Accommodation Finder",
+    "slug": "uaf-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "uaf",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0d0f14"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.uaf.accommodationfinder"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0d0f14"
+      },
+      "package": "com.uaf.accommodationfinder"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow UAF to access your photos to upload property images."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
