@@ -896,7 +896,8 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
 ══════════════════════════════════════════ -->
 <script>
 // ─── CONFIG ─────────────────────────────────
-const API_BASE_URL = 'https://uaf-nestfinder-full-stack.onrender.com';   // Change to your backend URL
+const BACKEND_URL = 'https://uaf-nestfinder-full-stack.onrender.com';
+const API         = 'https://uaf-nestfinder-full-stack.onrender.com/api';
 
 // ─── STATE ──────────────────────────────────
 let token = localStorage.getItem('uaf_token');
@@ -1008,9 +1009,7 @@ function initStudent() {
   document.getElementById('student-avatar').textContent = user.name[0].toUpperCase();
   document.getElementById('student-name').textContent = user.name;
   showStudentSection('browse');
-  // Check for unread notifications after a short delay
   setTimeout(checkNotifCount, 1000);
-  // Refresh badge every 60s
   setInterval(checkNotifCount, 60000);
 }
 
@@ -1080,7 +1079,7 @@ function renderProperties(props) {
     const facs = (p.facilities||'').split(',').filter(Boolean).slice(0,3)
       .map(f => `<span class="fac-tag">${f.trim()}</span>`).join('');
     const img = p.image_path
-      ? `<img src="http://localhost:5000${p.image_path}" alt="${p.title}" loading="lazy"/>`
+      ? `<img src="${BACKEND_URL}${p.image_path}" alt="${p.title}" loading="lazy"/>`
       : `<div class="prop-img-placeholder">🏠</div>`;
     return `
     <div class="prop-card">
@@ -1238,7 +1237,6 @@ async function loadMyRequests() {
       return;
     }
     const typeIcon = { PG:'🛏️', Hostel:'🏠', Flat:'🏢' };
-    const statusColor = { pending:'#e6a028', accepted:'var(--success)', rejected:'var(--danger)' };
     const statusIcon  = { pending:'⏳', accepted:'✅', rejected:'❌' };
     wrap.innerHTML = data.map(r => `
       <div class="req-card">
@@ -1337,7 +1335,6 @@ async function loadAccommodationNotifs() {
         </div>
         <div class="notif-meta">Sent on ${new Date(r.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}</div>
       </div>`).join('');
-    // Update bell badge
     const unread = data.filter(r => r.status !== 'pending').length;
     updateNotifBadge(unread);
   } catch(e) {
@@ -1453,12 +1450,13 @@ async function checkNotifCount() {
 
 // ═══════════════════════════════════════════
 // OWNER
+// ═══════════════════════════════════════════
 function initOwner() {
   showPage('owner-page');
   document.getElementById('owner-name-sb').textContent = user.name;
   document.getElementById('owner-greeting').textContent = `Welcome back, ${user.name}!`;
   showOwnerSection('dashboard');
-  loadOwnerProperties(); // pre-load
+  loadOwnerProperties();
 }
 
 const ownerSections = ['dashboard','my-props','add-prop','requests','attendance','fees'];
@@ -1549,11 +1547,7 @@ function editProperty(id) {
 async function saveProperty() {
   const editId = document.getElementById('edit-prop-id').value;
   const fd = new FormData();
-  ['type','vacancy_status','title','location','rent','total_rooms','available_rooms','facilities','description'].forEach(k => {
-    const el = document.getElementById(`p-${k.replace('_','-').replace('_rooms','-rooms').replace('vacancy_status','vacancy')}`);
-    if (el) fd.append(k, el.value);
-  });
-  // Fix field name mapping
+
   fd.set('type',            document.getElementById('p-type').value);
   fd.set('vacancy_status',  document.getElementById('p-vacancy').value);
   fd.set('title',           document.getElementById('p-title').value);
