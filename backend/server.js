@@ -27,12 +27,15 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ─── DB Pool ─────────────────────────────────────────────────
 const pool = mysql.createPool({
-  host:     process.env.DB_HOST     || 'localhost',
-  user:     process.env.DB_USER     || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME     || 'unified_accommodation',
+  host:               process.env.DB_HOST     || 'localhost',
+  port:               process.env.DB_PORT     || 3306,
+  user:               process.env.DB_USER     || 'root',
+  password:           process.env.DB_PASSWORD || '',
+  database:           process.env.DB_NAME     || 'unified_accommodation',
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit:    10,
+  // Aiven requires SSL; rejectUnauthorized: false allows self-signed/managed certificates
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
 });
 
 // ─── Multer (image upload) ───────────────────────────────────
@@ -72,6 +75,13 @@ function ownerOnly(req, res, next) {
   if (req.user.role !== 'owner') return res.status(403).json({ error: 'Owner access only' });
   next();
 }
+
+// ════════════════════════════════════════════════════════════
+// BASE ROUTE
+// ════════════════════════════════════════════════════════════
+app.get('/', (req, res) => {
+  res.send('UAF Backend API is running successfully!');
+});
 
 // ════════════════════════════════════════════════════════════
 // AUTH ROUTES
@@ -116,7 +126,7 @@ app.post('/api/auth/login', async (req, res) => {
 // PROPERTY ROUTES
 // ════════════════════════════════════════════════════════════
 
-// GET /api/properties  — ALL properties (students can see all)
+// GET /api/properties  — ALL properties
 app.get('/api/properties', async (req, res) => {
   try {
     const { type, location, min_rent, max_rent, vacancy } = req.query;
@@ -342,7 +352,6 @@ app.delete('/api/flatmates/:id', authMiddleware, async (req, res) => {
 app.post('/api/flatmate-connects', authMiddleware, async (req, res) => {
   try {
     const { flatmate_request_id, message, contact } = req.body;
-    // Get the flatmate post to find target user
     const [[post]] = await pool.execute('SELECT * FROM flatmate_requests WHERE id=?', [flatmate_request_id]);
     if (!post) return res.status(404).json({ error: 'Flatmate post not found' });
     if (post.user_id === req.user.id) return res.status(400).json({ error: 'Cannot connect to your own post' });
@@ -434,7 +443,6 @@ app.get('/api/attendance/:property_id', authMiddleware, ownerOnly, async (req, r
 app.post('/api/attendance', authMiddleware, ownerOnly, async (req, res) => {
   try {
     const { property_id, tenant_name, room_no, date, status } = req.body;
-    // Validate property is PG or Hostel
     const [[prop]] = await pool.execute('SELECT type FROM properties WHERE id=? AND owner_id=?', [property_id, req.user.id]);
     if (!prop) return res.status(404).json({ error: 'Property not found' });
     if (!['PG','Hostel'].includes(prop.type)) return res.status(400).json({ error: 'Attendance only for PG or Hostel' });
